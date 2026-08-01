@@ -1,505 +1,278 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
+  <head>
+    <base target="_top" />
 
-<head>
-  <base target="_top">
+    <meta charset="UTF-8" />
 
-  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
+    <?!= HtmlService .createHtmlOutputFromFile("Style") .getContent(); ?>
+  </head>
 
-  <?!= HtmlService
-    .createHtmlOutputFromFile("Style")
-    .getContent(); ?>
-</head>
+  <body>
+    <main class="page-container">
+      <section class="form-card">
+        <div class="page-heading">
+          <h1>シフト提出</h1>
 
-
-<body>
-  <main class="page-container">
-
-    <section class="form-card">
-
-      <div class="page-heading">
-        <h1>
-          シフト提出
-        </h1>
-
-        <p>
-          勤務日と授業時間を入力してください
-        </p>
-      </div>
-
-
-      <!-- 校舎名 -->
-      <div class="form-group">
-        <label for="schoolName">
-          校舎名
-        </label>
-
-        <select
-          id="schoolName"
-          onchange="filterMembersBySchool()"
-        >
-          <option value="">
-            読み込み中...
-          </option>
-        </select>
-      </div>
-
-
-      <!-- 名前 -->
-      <div class="form-group">
-        <label for="userName">
-          名前
-        </label>
-
-        <select
-          id="userName"
-          disabled
-        >
-          <option value="">
-            先に校舎名を選択してください
-          </option>
-        </select>
-      </div>
-
-
-      <!-- 勤務日 -->
-      <div class="form-group">
-        <label>
-          勤務日
-        </label>
-
-        <button
-          type="button"
-          class="calendar-open-button"
-          onclick="openCalendarModal()"
-        >
-          カレンダーから選択
-        </button>
-
-        <div
-          id="selectedDatesDisplay"
-          class="selected-dates-display"
-        >
-          日付が選択されていません
+          <p>勤務日と授業時間を入力してください</p>
         </div>
-      </div>
 
+        <!-- 校舎名 -->
+        <div class="form-group">
+          <label for="schoolName"> 校舎名 </label>
 
-      <!-- スタッフ勤務時間 -->
-      <div class="form-section">
-        <div class="section-heading">
-          <div>
-            <h2>
-              スタッフ勤務時間
-            </h2>
+          <select id="schoolName" onchange="filterMembersBySchool()">
+            <option value="">読み込み中...</option>
+          </select>
+        </div>
 
-            <p>
-              選択したすべての日に適用されます
-            </p>
+        <!-- 名前 -->
+        <div class="form-group">
+          <label for="userName"> 名前 </label>
+
+          <select id="userName" disabled>
+            <option value="">先に校舎名を選択してください</option>
+          </select>
+        </div>
+
+        <!-- 勤務日 -->
+        <div class="form-group">
+          <label> 勤務日 </label>
+
+          <button type="button" class="calendar-open-button" onclick="openCalendarModal()">
+            カレンダーから選択
+          </button>
+
+          <div id="selectedDatesDisplay" class="selected-dates-display">
+            日付が選択されていません
           </div>
         </div>
 
+        <!-- スタッフ勤務時間 -->
+        <div class="form-section">
+          <div class="section-heading">
+            <div>
+              <h2>スタッフ勤務時間</h2>
 
-        <div class="time-row">
-          <div class="time-field">
-            <label for="staffStart">
-              開始時間
-            </label>
-
-            <input
-              id="staffStart"
-              type="time"
-            >
+              <p>選択したすべての日に適用されます</p>
+            </div>
           </div>
 
+          <div class="time-row">
+            <div class="time-field">
+              <label for="staffStart"> 開始時間 </label>
 
-          <span class="time-separator">
-            〜
-          </span>
+              <input id="staffStart" type="time" />
+            </div>
 
+            <span class="time-separator"> 〜 </span>
 
-          <div class="time-field">
-            <label for="staffEnd">
-              終了時間
-            </label>
+            <div class="time-field">
+              <label for="staffEnd"> 終了時間 </label>
 
-            <input
-              id="staffEnd"
-              type="time"
-            >
+              <input id="staffEnd" type="time" />
+            </div>
           </div>
         </div>
-      </div>
 
+        <!-- 授業時間 -->
+        <div class="form-section">
+          <div class="section-heading">
+            <div>
+              <h2>授業時間</h2>
 
-      <!-- 授業時間 -->
-      <div class="form-section">
-        <div class="section-heading">
-          <div>
-            <h2>
-              授業時間
-            </h2>
+              <p>最大7件まで追加できます</p>
+            </div>
 
-            <p>
-              最大7件まで追加できます
-            </p>
+            <span id="lessonCount"> 1 / 7件 </span>
           </div>
 
-          <span id="lessonCount">
-            1 / 7件
-          </span>
+          <div id="lessonList" class="lesson-list"></div>
+
+          <button
+            id="addLessonButton"
+            type="button"
+            class="add-lesson-button"
+            onclick="addLessonRow()"
+          >
+            ＋ 授業時間を追加
+          </button>
         </div>
 
-
-        <div
-          id="lessonList"
-          class="lesson-list"
-        ></div>
-
-
-        <button
-          id="addLessonButton"
-          type="button"
-          class="add-lesson-button"
-          onclick="addLessonRow()"
-        >
-          ＋ 授業時間を追加
+        <!-- 送信 -->
+        <button id="submitButton" type="button" class="submit-button" onclick="sendShifts()">
+          シフトを送信
         </button>
+
+        <p id="message" class="message" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <!-- カレンダーモーダル -->
+    <div id="calendarModal" class="modal-overlay" onclick="handleModalBackgroundClick(event)">
+      <div class="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendarTitle">
+        <div class="modal-handle"></div>
+
+        <div class="calendar-header">
+          <button type="button" class="month-button" aria-label="前の月" onclick="changeMonth(-1)">
+            ＜
+          </button>
+
+          <h2 id="calendarTitle"></h2>
+
+          <button type="button" class="month-button" aria-label="次の月" onclick="changeMonth(1)">
+            ＞
+          </button>
+        </div>
+
+        <div class="weekday-row">
+          <div>日</div>
+          <div>月</div>
+          <div>火</div>
+          <div>水</div>
+          <div>木</div>
+          <div>金</div>
+          <div>土</div>
+        </div>
+
+        <div id="calendarGrid" class="calendar-grid"></div>
+
+        <div class="calendar-summary">
+          <span id="temporaryDateCount"> 0日選択中 </span>
+        </div>
+
+        <div class="calendar-footer">
+          <button type="button" class="secondary-button" onclick="clearTemporaryDates()">
+            選択解除
+          </button>
+
+          <button type="button" class="secondary-button" onclick="closeCalendarModal()">
+            キャンセル
+          </button>
+
+          <button type="button" class="confirm-button" onclick="confirmSelectedDates()">
+            決定
+          </button>
+        </div>
       </div>
-
-
-      <!-- 送信 -->
-      <button
-        id="submitButton"
-        type="button"
-        class="submit-button"
-        onclick="sendShifts()"
-      >
-        シフトを送信
-      </button>
-
-
-      <p
-        id="message"
-        class="message"
-        aria-live="polite"
-      ></p>
-
-    </section>
-  </main>
-
-
-  <!-- カレンダーモーダル -->
-  <div
-    id="calendarModal"
-    class="modal-overlay"
-    onclick="handleModalBackgroundClick(event)"
-  >
-    <div
-      class="calendar-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="calendarTitle"
-    >
-
-      <div class="modal-handle"></div>
-
-
-      <div class="calendar-header">
-        <button
-          type="button"
-          class="month-button"
-          aria-label="前の月"
-          onclick="changeMonth(-1)"
-        >
-          ＜
-        </button>
-
-        <h2 id="calendarTitle"></h2>
-
-        <button
-          type="button"
-          class="month-button"
-          aria-label="次の月"
-          onclick="changeMonth(1)"
-        >
-          ＞
-        </button>
-      </div>
-
-
-      <div class="weekday-row">
-        <div>日</div>
-        <div>月</div>
-        <div>火</div>
-        <div>水</div>
-        <div>木</div>
-        <div>金</div>
-        <div>土</div>
-      </div>
-
-
-      <div
-        id="calendarGrid"
-        class="calendar-grid"
-      ></div>
-
-
-      <div class="calendar-summary">
-        <span id="temporaryDateCount">
-          0日選択中
-        </span>
-      </div>
-
-
-      <div class="calendar-footer">
-        <button
-          type="button"
-          class="secondary-button"
-          onclick="clearTemporaryDates()"
-        >
-          選択解除
-        </button>
-
-        <button
-          type="button"
-          class="secondary-button"
-          onclick="closeCalendarModal()"
-        >
-          キャンセル
-        </button>
-
-        <button
-          type="button"
-          class="confirm-button"
-          onclick="confirmSelectedDates()"
-        >
-          決定
-        </button>
-      </div>
-
     </div>
-  </div>
 
+    <script>
+      const MAX_LESSONS = 7;
 
-  <script>
-    const MAX_LESSONS = 7;
+      let allMembers = [];
 
-    let allMembers = [];
+      let selectedDates = [];
 
-    let selectedDates = [];
+      let temporarySelectedDates = [];
 
-    let temporarySelectedDates = [];
+      let currentCalendarDate = new Date();
 
-    let currentCalendarDate =
-      new Date();
-
-
-    window.addEventListener(
-      "DOMContentLoaded",
-      function() {
+      window.addEventListener("DOMContentLoaded", function () {
         loadMembers();
 
         updateLessonRows();
-      }
-    );
+      });
 
+      /**
+       * 校舎一覧と名前一覧を取得する
+       */
+      function loadMembers() {
+        const schoolSelect = document.getElementById("schoolName");
 
-    /**
-     * 校舎一覧と名前一覧を取得する
-     */
-    function loadMembers() {
-      const schoolSelect =
-        document.getElementById(
-          "schoolName"
-        );
+        const userSelect = document.getElementById("userName");
 
-      const userSelect =
-        document.getElementById(
-          "userName"
-        );
+        google.script.run
+          .withSuccessHandler(function (result) {
+            allMembers = result.members || [];
 
+            schoolSelect.innerHTML = '<option value="">' + "校舎名を選択してください" + "</option>";
 
-      google.script.run
-        .withSuccessHandler(
-          function(result) {
-            allMembers =
-              result.members || [];
+            result.schools.forEach(function (schoolName) {
+              const option = document.createElement("option");
 
+              option.value = schoolName;
 
-            schoolSelect.innerHTML =
-              '<option value="">' +
-              '校舎名を選択してください' +
-              '</option>';
+              option.textContent = schoolName;
 
-
-            result.schools.forEach(
-              function(schoolName) {
-                const option =
-                  document.createElement(
-                    "option"
-                  );
-
-                option.value =
-                  schoolName;
-
-                option.textContent =
-                  schoolName;
-
-                schoolSelect.appendChild(
-                  option
-                );
-              }
-            );
-
+              schoolSelect.appendChild(option);
+            });
 
             userSelect.innerHTML =
-              '<option value="">' +
-              '先に校舎名を選択してください' +
-              '</option>';
+              '<option value="">' + "先に校舎名を選択してください" + "</option>";
 
             userSelect.disabled = true;
-          }
-        )
-        .withFailureHandler(
-          function(error) {
-            schoolSelect.innerHTML =
-              '<option value="">' +
-              '取得できませんでした' +
-              '</option>';
+          })
+          .withFailureHandler(function (error) {
+            schoolSelect.innerHTML = '<option value="">' + "取得できませんでした" + "</option>";
 
-            userSelect.innerHTML =
-              '<option value="">' +
-              '取得できませんでした' +
-              '</option>';
+            userSelect.innerHTML = '<option value="">' + "取得できませんでした" + "</option>";
 
             userSelect.disabled = true;
 
-            showMessage(
-              error.message ||
-              "校舎名と名前を取得できませんでした。",
-              true
-            );
-          }
-        )
-        .getMembers();
-    }
-
-
-    /**
-     * 選択された校舎の名前だけ表示する
-     */
-    function filterMembersBySchool() {
-      const schoolName =
-        document
-          .getElementById(
-            "schoolName"
-          )
-          .value;
-
-      const userSelect =
-        document.getElementById(
-          "userName"
-        );
-
-
-      userSelect.innerHTML = "";
-
-
-      if (!schoolName) {
-        userSelect.innerHTML =
-          '<option value="">' +
-          '先に校舎名を選択してください' +
-          '</option>';
-
-        userSelect.disabled = true;
-
-        return;
+            showMessage(error.message || "校舎名と名前を取得できませんでした。", true);
+          })
+          .getMembers();
       }
 
+      /**
+       * 選択された校舎の名前だけ表示する
+       */
+      function filterMembersBySchool() {
+        const schoolName = document.getElementById("schoolName").value;
 
-      const filteredMembers =
-        allMembers.filter(
-          function(member) {
-            return (
-              member.school_name ===
-              schoolName
-            );
-          }
-        );
+        const userSelect = document.getElementById("userName");
 
+        userSelect.innerHTML = "";
 
-      userSelect.innerHTML =
-        '<option value="">' +
-        '名前を選択してください' +
-        '</option>';
+        if (!schoolName) {
+          userSelect.innerHTML = '<option value="">' + "先に校舎名を選択してください" + "</option>";
 
+          userSelect.disabled = true;
 
-      filteredMembers.forEach(
-        function(member) {
-          const option =
-            document.createElement(
-              "option"
-            );
-
-          option.value =
-            member.name;
-
-          option.textContent =
-            member.name;
-
-          userSelect.appendChild(
-            option
-          );
+          return;
         }
-      );
 
+        const filteredMembers = allMembers.filter(function (member) {
+          return member.school_name === schoolName;
+        });
 
-      userSelect.disabled = false;
-    }
+        userSelect.innerHTML = '<option value="">' + "名前を選択してください" + "</option>";
 
+        filteredMembers.forEach(function (member) {
+          const option = document.createElement("option");
 
-    /**
-     * 授業時間を追加する
-     */
-    function addLessonRow() {
-      const lessonList =
-        document.getElementById(
-          "lessonList"
-        );
+          option.value = member.name;
 
-      const lessonRows =
-        lessonList.querySelectorAll(
-          ".lesson-row"
-        );
+          option.textContent = member.name;
 
+          userSelect.appendChild(option);
+        });
 
-      if (
-        lessonRows.length >=
-        MAX_LESSONS
-      ) {
-        showMessage(
-          "授業時間は最大7件までです。",
-          true
-        );
-
-        return;
+        userSelect.disabled = false;
       }
 
+      /**
+       * 授業時間を追加する
+       */
+      function addLessonRow() {
+        const lessonList = document.getElementById("lessonList");
 
-      const lessonRow =
-        document.createElement("div");
+        const lessonRows = lessonList.querySelectorAll(".lesson-row");
 
-      lessonRow.className =
-        "lesson-row";
+        if (lessonRows.length >= MAX_LESSONS) {
+          showMessage("授業時間は最大7件までです。", true);
 
+          return;
+        }
 
-      lessonRow.innerHTML = `
+        const lessonRow = document.createElement("div");
+
+        lessonRow.className = "lesson-row";
+
+        lessonRow.innerHTML = `
         <div class="lesson-row-header">
           <span class="lesson-number">
           </span>
@@ -542,789 +315,402 @@
         </div>
       `;
 
+        lessonList.appendChild(lessonRow);
 
-      lessonList.appendChild(
-        lessonRow
-      );
+        updateLessonRows();
+      }
 
-      updateLessonRows();
-    }
+      /**
+       * 授業時間を削除する
+       */
+      function removeLessonRow(button) {
+        const lessonRows = document.querySelectorAll(".lesson-row");
 
+        button.closest(".lesson-row").remove();
 
-    /**
-     * 授業時間を削除する
-     */
-    function removeLessonRow(button) {
-      const lessonRows =
-        document.querySelectorAll(
-          ".lesson-row"
-        );
+        updateLessonRows();
+      }
 
-      button
-        .closest(".lesson-row")
-        .remove();
+      /**
+       * 授業番号と件数を更新する
+       */
+      function updateLessonRows() {
+        const lessonRows = document.querySelectorAll(".lesson-row");
 
-      updateLessonRows();
-    }
+        lessonRows.forEach(function (row, index) {
+          row.querySelector(".lesson-number").textContent = "授業 " + (index + 1);
+        });
 
+        document.getElementById("lessonCount").textContent =
+          lessonRows.length + " / " + MAX_LESSONS + "件";
 
-    /**
-     * 授業番号と件数を更新する
-     */
-    function updateLessonRows() {
-      const lessonRows =
-        document.querySelectorAll(
-          ".lesson-row"
-        );
+        document.getElementById("addLessonButton").disabled = lessonRows.length >= MAX_LESSONS;
+      }
 
+      /**
+       * 授業時間を配列で取得する
+       */
+      function getLessons() {
+        const lessonRows = document.querySelectorAll(".lesson-row");
 
-      lessonRows.forEach(
-        function(row, index) {
-          row
-            .querySelector(
-              ".lesson-number"
-            )
-            .textContent =
-              "授業 " +
-              (index + 1);
-        }
-      );
-
-
-      document
-        .getElementById(
-          "lessonCount"
-        )
-        .textContent =
-          lessonRows.length +
-          " / " +
-          MAX_LESSONS +
-          "件";
-
-
-      document
-        .getElementById(
-          "addLessonButton"
-        )
-        .disabled =
-          lessonRows.length >=
-          MAX_LESSONS;
-    }
-
-
-    /**
-     * 授業時間を配列で取得する
-     */
-    function getLessons() {
-      const lessonRows =
-        document.querySelectorAll(
-          ".lesson-row"
-        );
-
-
-      return Array
-        .from(lessonRows)
-        .map(function(row) {
+        return Array.from(lessonRows).map(function (row) {
           return {
-            start:
-              row
-                .querySelector(
-                  ".lesson-start"
-                )
-                .value,
+            start: row.querySelector(".lesson-start").value,
 
-            end:
-              row
-                .querySelector(
-                  ".lesson-end"
-                )
-                .value
+            end: row.querySelector(".lesson-end").value,
           };
         });
-    }
+      }
 
+      /**
+       * カレンダーを開く
+       */
+      function openCalendarModal() {
+        temporarySelectedDates = [...selectedDates];
 
-    /**
-     * カレンダーを開く
-     */
-    function openCalendarModal() {
-      temporarySelectedDates =
-        [...selectedDates];
+        document.getElementById("calendarModal").classList.add("is-open");
 
+        document.body.classList.add("modal-open");
 
-      document
-        .getElementById(
-          "calendarModal"
-        )
-        .classList
-        .add("is-open");
+        renderCalendar();
+      }
 
+      /**
+       * カレンダーを閉じる
+       */
+      function closeCalendarModal() {
+        document.getElementById("calendarModal").classList.remove("is-open");
 
-      document.body.classList.add(
-        "modal-open"
-      );
+        document.body.classList.remove("modal-open");
+      }
 
+      /**
+       * モーダル外側を押したら閉じる
+       */
+      function handleModalBackgroundClick(event) {
+        if (event.target.id === "calendarModal") {
+          closeCalendarModal();
+        }
+      }
 
-      renderCalendar();
-    }
+      /**
+       * 前月・次月へ移動
+       */
+      function changeMonth(amount) {
+        currentCalendarDate = new Date(
+          currentCalendarDate.getFullYear(),
 
+          currentCalendarDate.getMonth() + amount,
 
-    /**
-     * カレンダーを閉じる
-     */
-    function closeCalendarModal() {
-      document
-        .getElementById(
-          "calendarModal"
-        )
-        .classList
-        .remove("is-open");
+          1,
+        );
 
+        renderCalendar();
+      }
 
-      document.body.classList.remove(
-        "modal-open"
-      );
-    }
+      /**
+       * カレンダーを描画する
+       */
+      function renderCalendar() {
+        const year = currentCalendarDate.getFullYear();
 
+        const month = currentCalendarDate.getMonth();
 
-    /**
-     * モーダル外側を押したら閉じる
-     */
-    function handleModalBackgroundClick(
-      event
-    ) {
-      if (
-        event.target.id ===
-        "calendarModal"
-      ) {
+        const firstWeekday = new Date(year, month, 1).getDay();
+
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        const title = document.getElementById("calendarTitle");
+
+        const grid = document.getElementById("calendarGrid");
+
+        title.textContent = year + "年 " + (month + 1) + "月";
+
+        grid.innerHTML = "";
+
+        for (let i = 0; i < firstWeekday; i++) {
+          const empty = document.createElement("div");
+
+          empty.className = "calendar-empty";
+
+          grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= lastDate; day++) {
+          const dateString = formatDate(year, month, day);
+
+          const button = document.createElement("button");
+
+          button.type = "button";
+
+          button.className = "calendar-date";
+
+          button.textContent = day;
+
+          if (temporarySelectedDates.includes(dateString)) {
+            button.classList.add("is-selected");
+          }
+
+          button.addEventListener("click", function () {
+            toggleDate(dateString);
+          });
+
+          grid.appendChild(button);
+        }
+
+        updateTemporaryDateCount();
+      }
+
+      /**
+       * 日付を選択・解除する
+       */
+      function toggleDate(dateString) {
+        const index = temporarySelectedDates.indexOf(dateString);
+
+        if (index === -1) {
+          temporarySelectedDates.push(dateString);
+        } else {
+          temporarySelectedDates.splice(index, 1);
+        }
+
+        renderCalendar();
+      }
+
+      /**
+       * モーダル内の日付選択を解除
+       */
+      function clearTemporaryDates() {
+        temporarySelectedDates = [];
+
+        renderCalendar();
+      }
+
+      /**
+       * 選択日数を表示
+       */
+      function updateTemporaryDateCount() {
+        document.getElementById("temporaryDateCount").textContent =
+          temporarySelectedDates.length + "日選択中";
+      }
+
+      /**
+       * 日付選択を確定する
+       */
+      function confirmSelectedDates() {
+        selectedDates = [...temporarySelectedDates];
+
+        selectedDates.sort();
+
+        updateSelectedDatesDisplay();
+
         closeCalendarModal();
       }
-    }
 
+      /**
+       * 選択した日付を画面に表示する
+       */
+      function updateSelectedDatesDisplay() {
+        const display = document.getElementById("selectedDatesDisplay");
 
-    /**
-     * 前月・次月へ移動
-     */
-    function changeMonth(amount) {
-      currentCalendarDate =
-        new Date(
-          currentCalendarDate
-            .getFullYear(),
+        if (selectedDates.length === 0) {
+          display.textContent = "日付が選択されていません";
 
-          currentCalendarDate
-            .getMonth() +
-            amount,
+          display.classList.remove("has-dates");
 
-          1
-        );
-
-
-      renderCalendar();
-    }
-
-
-    /**
-     * カレンダーを描画する
-     */
-    function renderCalendar() {
-      const year =
-        currentCalendarDate
-          .getFullYear();
-
-      const month =
-        currentCalendarDate
-          .getMonth();
-
-      const firstWeekday =
-        new Date(
-          year,
-          month,
-          1
-        ).getDay();
-
-      const lastDate =
-        new Date(
-          year,
-          month + 1,
-          0
-        ).getDate();
-
-
-      const title =
-        document.getElementById(
-          "calendarTitle"
-        );
-
-      const grid =
-        document.getElementById(
-          "calendarGrid"
-        );
-
-
-      title.textContent =
-        year +
-        "年 " +
-        (month + 1) +
-        "月";
-
-
-      grid.innerHTML = "";
-
-
-      for (
-        let i = 0;
-        i < firstWeekday;
-        i++
-      ) {
-        const empty =
-          document.createElement(
-            "div"
-          );
-
-        empty.className =
-          "calendar-empty";
-
-        grid.appendChild(empty);
-      }
-
-
-      for (
-        let day = 1;
-        day <= lastDate;
-        day++
-      ) {
-        const dateString =
-          formatDate(
-            year,
-            month,
-            day
-          );
-
-
-        const button =
-          document.createElement(
-            "button"
-          );
-
-
-        button.type = "button";
-
-        button.className =
-          "calendar-date";
-
-        button.textContent = day;
-
-
-        if (
-          temporarySelectedDates
-            .includes(dateString)
-        ) {
-          button.classList.add(
-            "is-selected"
-          );
+          return;
         }
 
+        display.innerHTML = "";
 
-        button.addEventListener(
-          "click",
-          function() {
-            toggleDate(
-              dateString
-            );
-          }
-        );
+        display.classList.add("has-dates");
 
+        selectedDates.forEach(function (date) {
+          const chip = document.createElement("span");
 
-        grid.appendChild(button);
+          chip.className = "date-chip";
+
+          chip.textContent = formatDisplayDate(date);
+
+          display.appendChild(chip);
+        });
       }
 
+      /**
+       * YYYY-MM-DD形式を作る
+       */
+      function formatDate(year, month, day) {
+        const formattedMonth = String(month + 1).padStart(2, "0");
 
-      updateTemporaryDateCount();
-    }
+        const formattedDay = String(day).padStart(2, "0");
 
-
-    /**
-     * 日付を選択・解除する
-     */
-    function toggleDate(dateString) {
-      const index =
-        temporarySelectedDates
-          .indexOf(dateString);
-
-
-      if (index === -1) {
-        temporarySelectedDates
-          .push(dateString);
-      } else {
-        temporarySelectedDates
-          .splice(index, 1);
+        return year + "-" + formattedMonth + "-" + formattedDay;
       }
 
+      /**
+       * 日付を表示用にする
+       */
+      function formatDisplayDate(dateString) {
+        const parts = dateString.split("-");
 
-      renderCalendar();
-    }
-
-
-    /**
-     * モーダル内の日付選択を解除
-     */
-    function clearTemporaryDates() {
-      temporarySelectedDates = [];
-
-      renderCalendar();
-    }
-
-
-    /**
-     * 選択日数を表示
-     */
-    function updateTemporaryDateCount() {
-      document
-        .getElementById(
-          "temporaryDateCount"
-        )
-        .textContent =
-          temporarySelectedDates
-            .length +
-          "日選択中";
-    }
-
-
-    /**
-     * 日付選択を確定する
-     */
-    function confirmSelectedDates() {
-      selectedDates =
-        [...temporarySelectedDates];
-
-
-      selectedDates.sort();
-
-
-      updateSelectedDatesDisplay();
-
-      closeCalendarModal();
-    }
-
-
-    /**
-     * 選択した日付を画面に表示する
-     */
-    function updateSelectedDatesDisplay() {
-      const display =
-        document.getElementById(
-          "selectedDatesDisplay"
-        );
-
-
-      if (
-        selectedDates.length === 0
-      ) {
-        display.textContent =
-          "日付が選択されていません";
-
-        display.classList.remove(
-          "has-dates"
-        );
-
-        return;
+        return Number(parts[1]) + "/" + Number(parts[2]);
       }
 
+      /**
+       * シフトを送信する
+       */
+      function sendShifts() {
+        const schoolName = document.getElementById("schoolName").value;
 
-      display.innerHTML = "";
+        const userName = document.getElementById("userName").value;
 
-      display.classList.add(
-        "has-dates"
-      );
+        const staffStart = document.getElementById("staffStart").value;
 
+        const staffEnd = document.getElementById("staffEnd").value;
 
-      selectedDates.forEach(
-        function(date) {
-          const chip =
-            document.createElement(
-              "span"
-            );
+        const lessons = getLessons();
 
-          chip.className =
-            "date-chip";
+        const submitButton = document.getElementById("submitButton");
 
-          chip.textContent =
-            formatDisplayDate(
-              date
-            );
+        const validationMessage = validateForm(schoolName, userName, staffStart, staffEnd, lessons);
 
-          display.appendChild(
-            chip
-          );
+        if (validationMessage) {
+          showMessage(validationMessage, true);
+
+          return;
         }
-      );
-    }
 
+        const request = {
+          school_name: schoolName,
 
-    /**
-     * YYYY-MM-DD形式を作る
-     */
-    function formatDate(
-      year,
-      month,
-      day
-    ) {
-      const formattedMonth =
-        String(
-          month + 1
-        ).padStart(2, "0");
+          user_name: userName,
 
-      const formattedDay =
-        String(day)
-          .padStart(2, "0");
+          selected_dates: selectedDates,
 
+          staff_start: staffStart,
 
-      return (
-        year +
-        "-" +
-        formattedMonth +
-        "-" +
-        formattedDay
-      );
-    }
+          staff_end: staffEnd,
 
+          lessons: lessons,
+        };
 
-    /**
-     * 日付を表示用にする
-     */
-    function formatDisplayDate(
-      dateString
-    ) {
-      const parts =
-        dateString.split("-");
+        submitButton.disabled = true;
 
+        submitButton.textContent = "送信中...";
 
-      return (
-        Number(parts[1]) +
-        "/" +
-        Number(parts[2])
-      );
-    }
+        showMessage("", false);
 
-
-    /**
-     * シフトを送信する
-     */
-    function sendShifts() {
-      const schoolName =
-        document
-          .getElementById(
-            "schoolName"
-          )
-          .value;
-
-
-      const userName =
-        document
-          .getElementById(
-            "userName"
-          )
-          .value;
-
-
-      const staffStart =
-        document
-          .getElementById(
-            "staffStart"
-          )
-          .value;
-
-
-      const staffEnd =
-        document
-          .getElementById(
-            "staffEnd"
-          )
-          .value;
-
-
-      const lessons =
-        getLessons();
-
-
-      const submitButton =
-        document.getElementById(
-          "submitButton"
-        );
-
-
-      const validationMessage =
-        validateForm(
-          schoolName,
-          userName,
-          staffStart,
-          staffEnd,
-          lessons
-        );
-
-
-      if (validationMessage) {
-        showMessage(
-          validationMessage,
-          true
-        );
-
-        return;
-      }
-
-
-      const request = {
-        school_name:
-          schoolName,
-
-        user_name:
-          userName,
-
-        selected_dates:
-          selectedDates,
-
-        staff_start:
-          staffStart,
-
-        staff_end:
-          staffEnd,
-
-        lessons:
-          lessons
-      };
-
-
-      submitButton.disabled = true;
-
-      submitButton.textContent =
-        "送信中...";
-
-
-      showMessage("", false);
-
-
-      google.script.run
-        .withSuccessHandler(
-          function(result) {
+        google.script.run
+          .withSuccessHandler(function (result) {
             showMessage(
               result.shift_count +
-              "日分のシフトと、" +
-              result.lesson_count +
-              "件の授業時間を登録しました。",
-              false
+                "日分のシフトと、" +
+                result.lesson_count +
+                "件の授業時間を登録しました。",
+              false,
             );
-
 
             resetForm();
 
+            submitButton.disabled = false;
 
-            submitButton.disabled =
-              false;
+            submitButton.textContent = "シフトを送信";
+          })
+          .withFailureHandler(function (error) {
+            showMessage(error.message || "登録に失敗しました。", true);
 
-            submitButton.textContent =
-              "シフトを送信";
+            submitButton.disabled = false;
+
+            submitButton.textContent = "シフトを送信";
+          })
+          .saveShifts(request);
+      }
+
+      /**
+       * 入力内容を確認する
+       */
+      function validateForm(schoolName, userName, staffStart, staffEnd, lessons) {
+        if (!schoolName) {
+          return "校舎名を選択してください。";
+        }
+
+        if (!userName) {
+          return "名前を選択してください。";
+        }
+
+        if (selectedDates.length === 0) {
+          return "勤務日を1日以上選択してください。";
+        }
+
+        if (!staffStart || !staffEnd) {
+          return "スタッフ勤務時間を入力してください。";
+        }
+
+        if (staffStart >= staffEnd) {
+          return "スタッフ終了時間は開始時間より後にしてください。";
+        }
+
+        for (let i = 0; i < lessons.length; i++) {
+          const lesson = lessons[i];
+
+          if (!lesson.start || !lesson.end) {
+            return "授業" + (i + 1) + "の時間を入力してください。";
           }
-        )
-        .withFailureHandler(
-          function(error) {
-            showMessage(
-              error.message ||
-              "登録に失敗しました。",
-              true
-            );
 
-
-            submitButton.disabled =
-              false;
-
-            submitButton.textContent =
-              "シフトを送信";
+          if (lesson.start >= lesson.end) {
+            return "授業" + (i + 1) + "の終了時間は開始時間より後にしてください。";
           }
-        )
-        .saveShifts(request);
-    }
 
-
-    /**
-     * 入力内容を確認する
-     */
-    function validateForm(
-      schoolName,
-      userName,
-      staffStart,
-      staffEnd,
-      lessons
-    ) {
-      if (!schoolName) {
-        return "校舎名を選択してください。";
-      }
-
-      if (!userName) {
-        return "名前を選択してください。";
-      }
-
-      if (
-        selectedDates.length === 0
-      ) {
-        return "勤務日を1日以上選択してください。";
-      }
-
-      if (
-        !staffStart ||
-        !staffEnd
-      ) {
-        return "スタッフ勤務時間を入力してください。";
-      }
-
-      if (
-        staffStart >= staffEnd
-      ) {
-        return "スタッフ終了時間は開始時間より後にしてください。";
-      }
-
-
-      for (
-        let i = 0;
-        i < lessons.length;
-        i++
-      ) {
-        const lesson =
-          lessons[i];
-
-
-        if (
-          !lesson.start ||
-          !lesson.end
-        ) {
-          return (
-            "授業" +
-            (i + 1) +
-            "の時間を入力してください。"
-          );
+          if (lesson.start < staffStart || lesson.end > staffEnd) {
+            return "授業" + (i + 1) + "はスタッフ勤務時間内に設定してください。";
+          }
         }
 
-
-        if (
-          lesson.start >=
-          lesson.end
-        ) {
-          return (
-            "授業" +
-            (i + 1) +
-            "の終了時間は開始時間より後にしてください。"
-          );
-        }
-
-
-        if (
-          lesson.start <
-            staffStart ||
-          lesson.end >
-            staffEnd
-        ) {
-          return (
-            "授業" +
-            (i + 1) +
-            "はスタッフ勤務時間内に設定してください。"
-          );
-        }
+        return "";
       }
 
+      /**
+       * 送信後に入力を初期化する
+       */
+      function resetForm() {
+        const schoolSelect = document.getElementById("schoolName");
 
-      return "";
-    }
+        const userSelect = document.getElementById("userName");
 
+        schoolSelect.value = "";
 
-    /**
-     * 送信後に入力を初期化する
-     */
-    function resetForm() {
-      const schoolSelect =
-        document.getElementById(
-          "schoolName"
-        );
+        userSelect.innerHTML = '<option value="">' + "先に校舎名を選択してください" + "</option>";
 
-      const userSelect =
-        document.getElementById(
-          "userName"
-        );
+        userSelect.disabled = true;
 
+        selectedDates = [];
 
-      schoolSelect.value = "";
+        temporarySelectedDates = [];
 
+        updateSelectedDatesDisplay();
 
-      userSelect.innerHTML =
-        '<option value="">' +
-        '先に校舎名を選択してください' +
-        '</option>';
+        document.getElementById("staffStart").value = "";
 
-      userSelect.disabled = true;
+        document.getElementById("staffEnd").value = "";
 
+        const lessonList = document.getElementById("lessonList");
 
-      selectedDates = [];
+        lessonList.innerHTML = "";
 
-      temporarySelectedDates = [];
+        updateLessonRows();
+      }
 
+      /**
+       * メッセージを表示する
+       */
+      function showMessage(text, isError) {
+        const message = document.getElementById("message");
 
-      updateSelectedDatesDisplay();
+        message.textContent = text;
 
+        message.classList.toggle("error-message", isError);
 
-      document
-        .getElementById(
-          "staffStart"
-        )
-        .value = "";
-
-
-      document
-        .getElementById(
-          "staffEnd"
-        )
-        .value = "";
-
-
-      const lessonList =
-        document.getElementById(
-          "lessonList"
-        );
-
-
-      lessonList.innerHTML = "";
-
-
-      updateLessonRows();
-    }
-
-
-    /**
-     * メッセージを表示する
-     */
-    function showMessage(
-      text,
-      isError
-    ) {
-      const message =
-        document.getElementById(
-          "message"
-        );
-
-
-      message.textContent = text;
-
-
-      message.classList.toggle(
-        "error-message",
-        isError
-      );
-
-
-      message.classList.toggle(
-        "success-message",
-        !isError &&
-        text !== ""
-      );
-    }
-  </script>
-</body>
-
+        message.classList.toggle("success-message", !isError && text !== "");
+      }
+    </script>
+  </body>
 </html>

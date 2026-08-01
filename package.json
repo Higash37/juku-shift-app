@@ -1,0 +1,24 @@
+{
+  "name": "juku-shift-app",
+  "version": "1.0.0",
+  "description": "塾の講師がシフトを提出するためのWebアプリです。",
+  "homepage": "https://github.com/Higash37/juku-shift-app#readme",
+  "bugs": {
+    "url": "https://github.com/Higash37/juku-shift-app/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Higash37/juku-shift-app.git"
+  },
+  "license": "ISC",
+  "author": "Higash37",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/google-apps-script": "^2.0.11",
+    "prettier": "^3.9.6"
+  }
+}
