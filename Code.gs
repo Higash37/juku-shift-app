@@ -9,7 +9,11 @@
 // return はブラウザに渡される
 function doGet() {
   // index.htmlをテンプレートとして読み、setTitleでタイトルを設定
-  return HtmlService.createTemplateFromFile("index").evaluate().setTitle("シフト提出");
+  //addMetaTag(名前, 内容)
+  return HtmlService.createTemplateFromFile("index")
+    .evaluate()
+    .setTitle("シフト提出")
+    .addMetaTag("viewport", "width=device-width, initial-scale=1");
 }
 
 /**
