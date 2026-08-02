@@ -49,5 +49,53 @@
       <button id="submitButton" type="button" onclick="sendShifts()">シフトを送信</button>
       <p id="message"></p>
     </main>
+    <div id="calendarModal">
+      <div class="calendar-modal">
+        <div class="calendar-header">
+          <button type="button" onclick="changeMonth(-1)">＜</button>
+          <h2 id="calendarTitle"></h2>
+          <button type="button" onclick="changeMonth(1)">＞</button>
+        </div>
+        <div class="weekday-row">
+          <div>日</div>
+          <div>月</div>
+          <div>火</div>
+          <div>水</div>
+          <div>木</div>
+          <div>金</div>
+          <div>土</div>
+        </div>
+        <div id="calendarGrid"></div>
+        <div>
+          <span id="temporaryDateCount">0日選択中</span>
+        </div>
+        <div class="calendar-footer">
+          <button type="button" onclick="clearTemporaryDates()">選択解除</button>
+          <button type="button" onclick="closeCalendarModal()">キャンセル</button>
+          <button type="button" onclick="confirmSelectedDates()">決定</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      let selectedDates = [];
+      // +授業時間を追加が押される度に入力欄を動的に作る
+      function addLessonRow() {
+        // HTML側で作った授業数リストのdivを探してくる
+        const lessonList = document.getElementById("lessonList");
+        // 授業時間入力欄のカード
+        const row = document.createElement("div");
+        row.innerHTML = `
+        <select class="lesson-start">
+          <option value="">読み込み中..</option>
+        </select>
+          ～
+        <select class="lesson-end">
+          <option value="">読み込み中..</option>
+        </select>
+        `;
+        // .append() はappendChild()とほぼ同じ動き。文字列も渡せる結構柔軟なメソッド。
+        lessonList.append(row);
+      }
+    </script>
   </body>
 </html>
