@@ -1,85 +1,855 @@
+/* ========================================
+   基本設定
+======================================== */
+
+/* padding/borderをwidthに含める設定。これ無いとwidth指定してもズレる */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  min-height: 100%;
+  /* Safariで画面回転時に文字が勝手に拡大されるの防ぐ */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
-  font-family: sans-serif;
-  background-color: #f5f5f5;
-  margin: 0;
-  padding: 20px;
+  width: 100%;
+  min-height: 100%;
+  margin: 0; /* ブラウザ標準の余白リセット */
+  /* OSごとに一番きれいなフォントを順番に指定。左から探して見つかったやつ使う */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+    "Yu Gothic", "Meiryo", sans-serif;
+  background-color: #f3f5f7;
+  color: #202124;
+  line-height: 1.6; /* 行間広めで読みやすく */
 }
 
-.page-container {
-  max-width: 480px;
-  margin: 0 auto;
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.01);
+/* モーダル開いてる間だけbodyに付くクラス。背景スクロール止める */
+body.modal-open {
+  overflow: hidden;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 8px;
-}
-
-.form-group label {
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-select,
-input {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 8px;
-  font-size: 16px;
+/* button/input/selectはデフォルトのフォントが違うのでbodyに揃える */
+button,
+input,
+select {
+  font: inherit;
 }
 
 button {
-  border: none;
-  border-radius: 4px;
-  background-color: #4a90e2;
-  color: #ffffff;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 6px;
+  cursor: pointer; /* 乗せたら指マーク */
 }
 
-#calendarModal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
+/* スマホでタップした時の灰色ハイライト消す */
+input,
+select,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ========================================
+   ページ全体
+======================================== */
+
+/* 一番外側のコンテナ */
+.page-container {
   width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.1);
-  justify-content: center;
-  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh; /* アドレスバーの出没で高さガタつかないようにする単位 */
+  display: flex;
+  justify-content: center; /* カード横方向中央 */
+  align-items: flex-start; /* 縦は上寄せ */
+  padding: 10px;
 }
 
-.calendar-modal {
+/* ========================================
+   メインカード
+======================================== */
+
+/* フォーム囲む白いカード */
+.form-card {
+  width: min(100%, 550px); /* 狭ければ100%、広ければ680pxで頭打ち */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 40px;
   background-color: #ffffff;
-  border-radius: 8px;
-  padding: 20px;
-  width: 90%;
-  max-width: 300px;
+  border: 1px solid #e3e7eb;
+  border-radius: 20px;
+  box-shadow: 0 18px 50px rgba(25, 35, 45, 0.01); /* 浮いてる感じの影 */
 }
 
-.weekday-row,
-#calendarGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+/* ========================================
+   ページ見出し
+======================================== */
+
+.page-heading {
   text-align: center;
 }
 
+.page-heading h1 {
+  margin: 0 0 8px; /* 下だけ8px、pとの間隔用 */
+  font-size: 30px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+.page-heading p {
+  margin: 0;
+  color: #6f7780; /* 補足っぽく薄めのグレー */
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ========================================
+   フォーム共通
+======================================== */
+
+/* ラベル＋入力欄1セット分の枠（校舎名、名前とか） */
+.form-group {
+  display: flex;
+  flex-direction: column; /* ラベル上、入力欄下 */
+  gap: 5px;
+}
+
+/* form-groupの直下のlabelだけ対象 */
+.form-group > label {
+  color: #25292d;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* input, selectまとめて共通の見た目 */
+input,
+select {
+  width: 100%;
+  min-height: 52px; /* タップしやすい高さ確保 */
+  padding: 7px 10px;
+  border: 1px solid #cfd5db;
+  border-radius: 11px;
+  background-color: #ffffff;
+  color: #202124;
+  font-size: 16px;
+  /* hover/focusの変化をふわっとさせる */
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+input::placeholder {
+  color: #a2a8ae;
+}
+
+/* マウス乗せたら枠線濃くする */
+input:hover,
+select:hover {
+  border-color: #afb7bf;
+}
+
+/* フォーカス時の見た目 */
+input:focus,
+select:focus {
+  outline: none; /* 標準の青枠消す */
+  border-color: #24282c;
+  box-shadow: 0 0 0 3px rgba(36, 40, 44, 0.11); /* 影で選択中を表現 */
+}
+
+/* disabledの見た目 */
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  background-color: #f1f3f5;
+  color: #8b9298;
+}
+
+/* ========================================
+   セクションカード
+======================================== */
+
+/* 「スタッフ勤務時間」「授業時間」みたいなフォーム内の1ブロック */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid #dfe4e8;
+  border-radius: 15px;
+  background-color: #fafbfc; /* カード内カードだと分かるよう色変える */
+}
+
+/* タイトル＋バッジを横並びにする行 */
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.section-heading h2 {
+  margin: 0 0 4px;
+  color: #24282c;
+  font-size: 19px;
+  line-height: 1.4;
+}
+
+.section-heading p {
+  margin: 0;
+  color: #737b84;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* 「1 / 7件」のバッジ */
+#lessonCount {
+  flex-shrink: 0; /* 幅狭くなっても縮まない */
+  padding: 6px 5px;
+  border-radius: 999px; /* 丸ピル型 */
+  background-color: #e8edf1;
+  color: #596169;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ========================================
+   時間入力
+======================================== */
+
+/* 「開始 〜 終了」を横並びにする行（スタッフ時間・授業時間共通） */
+.time-row,
+.lesson-time-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); /* 左右伸縮、真ん中は〜の分だけ */
+  align-items: end; /* 下端揃える */
+  gap: 5px;
+}
+
+.time-field {
+  min-width: 0; /* グリッドではみ出さないためのおまじない */
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.time-field label {
+  color: #596169;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 「〜」の文字 */
+.time-separator {
+  padding-bottom: 14px; /* 入力欄の下端に合わせる微調整 */
+  color: #737b84;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* type="time"用（今はselectにしたので未使用、残しててもOK） */
+input[type="time"] {
+  min-width: 0;
+  font-variant-numeric: tabular-nums; /* 数字幅揃えてガタつかせない */
+}
+
+/* ========================================
+   授業時間
+======================================== */
+
+.lesson-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* 授業1コマ分のカード（addLessonRowでJSが追加してくる） */
+.lesson-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid #d8dee4;
+  border-radius: 13px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(20, 30, 40, 0.035);
+}
+
+/* 「授業1」ラベルと削除ボタンを両端に配置 */
+.lesson-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+
+.lesson-number {
+  color: #292d31;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* 削除ボタン。赤系にして破壊的操作だと分かるように */
+.remove-lesson-button {
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid #e8b9b4;
+  border-radius: 9px;
+  background-color: #ffffff;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.remove-lesson-button:hover {
+  border-color: #d99b95;
+  background-color: #fff3f1;
+}
+
+.remove-lesson-button:active {
+  background-color: #ffe9e6;
+}
+
+/* 「＋ 授業時間を追加」。破線にして追加用の枠だと伝える */
+.add-lesson-button {
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 16px;
+  border: 1px dashed #9da7b0;
+  border-radius: 11px;
+  background-color: #ffffff;
+  color: #30353a;
+  font-size: 15px;
+  font-weight: 700;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.add-lesson-button:hover {
+  border-color: #767f87;
+  background-color: #f1f4f6;
+}
+
+.add-lesson-button:active {
+  background-color: #e9edf0;
+}
+
+/* 7件到達でJSがdisabled付けた時の見た目 */
+.add-lesson-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ========================================
+   カレンダー選択
+======================================== */
+
+.calendar-open-button {
+  width: 100%;
+  min-height: 52px;
+  padding: 13px;
+  border: 1px solid #cfd5db;
+  border-radius: 11px;
+  background-color: #ffffff;
+  color: #25292d;
+  font-size: 16px;
+  font-weight: 700;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.calendar-open-button:hover {
+  border-color: #aeb6be;
+  background-color: #f2f5f7;
+}
+
+.calendar-open-button:active {
+  background-color: #e9edf0;
+}
+
+/* 選択済み日付の表示エリア。未選択は破線 */
+.selected-dates-display {
+  min-height: 54px;
+  display: flex;
+  flex-wrap: wrap; /* チップ増えたら折り返す */
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed #cbd2d8;
+  border-radius: 11px;
+  background-color: #ffffff;
+  color: #747c84;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* JSが1件以上選んだ時に付けるクラス */
+.selected-dates-display.has-dates {
+  color: #25292d;
+}
+
+/* 選択済み日付1個分の丸チップ */
+.date-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background-color: #e8edf1;
+  color: #202124;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ========================================
+   送信ボタン
+======================================== */
+
+.submit-button {
+  width: 100%;
+  min-height: 58px;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 12px;
+  background-color: #202124; /* 主要アクションなので一番濃い色 */
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 18px rgba(32, 33, 36, 0.18);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.submit-button:hover {
+  opacity: 0.92;
+  box-shadow: 0 8px 22px rgba(32, 33, 36, 0.22);
+}
+
+/* 押した瞬間ちょっと縮める */
+.submit-button:active {
+  transform: scale(0.99);
+}
+
+/* 送信中（JSでdisabled=trueの間）の見た目 */
+.submit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* ========================================
+   メッセージ
+======================================== */
+
+.message {
+  min-height: 24px; /* 文字無い時も高さ確保してガタつかせない */
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* JSが成功時に付けるクラス */
+.success-message {
+  color: #14733c;
+}
+
+/* JSが失敗時に付けるクラス */
+.error-message {
+  color: #c62828;
+}
+
+/* ========================================
+   モーダル背景
+======================================== */
+
+/* カレンダーモーダルの、画面全体覆う暗い背景 */
+.modal-overlay {
+  position: fixed; /* スクロールしても固定 */
+  inset: 0; /* top/right/bottom/left全部0の省略形 */
+  z-index: 1000; /* 手前に表示 */
+  display: none; /* 普段は非表示。JSが.is-open付けたらflexに切替 */
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px); /* 奥をぼかす。非対応ブラウザは無視されるだけ */
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* JS(openCalendarModal)がこのクラス付けると表示される */
+.modal-overlay.is-open {
+  display: flex;
+}
+
+/* ========================================
+   カレンダーモーダル
+======================================== */
+
+/* モーダル中身の白いカード本体 */
+.calendar-modal {
+  width: min(100%, 370px);
+  padding: 10px;
+  border-radius: 19px;
+  background-color: #ffffff;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28); /* 背景より強めの影 */
+}
+
+/* スマホでよくある持ち手バー用の要素、今回は非表示のまま */
+.modal-handle {
+  display: none;
+}
+
+/* ========================================
+   カレンダーヘッダー
+======================================== */
+
+/* 「＜」「2026年 8月」「＞」の行 */
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.calendar-footer {
+.calendar-header h2 {
+  margin: 0;
+  color: #24282c;
+  font-size: 21px;
+  line-height: 1.3;
+}
+
+/* ＜／＞ボタンを丸いアイコンボタンに */
+.month-button {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%; /* 正方形+50%で正円 */
+  background-color: #edf0f2;
+  color: #25292d;
+  font-size: 19px;
+  font-weight: 700;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.month-button:hover {
+  background-color: #dfe4e8;
+}
+
+.month-button:active {
+  transform: scale(0.96);
+}
+
+/* ========================================
+   カレンダー本体
+======================================== */
+
+/* 曜日行と日付マス目、両方7列グリッド */
+.weekday-row,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.weekday-row {
+  margin-bottom: 8px;
+  text-align: center;
+  color: #747c84;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 空白マスと日付ボタン、どっちも正方形に */
+.calendar-empty,
+.calendar-date {
+  width: 100%;
+  aspect-ratio: 1; /* 幅決まれば高さも自動で正方形 */
+}
+
+.calendar-date {
+  min-width: 0;
+  min-height: 44px;
   display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 10px;
+  background-color: transparent;
+  color: #202124;
+  font-size: 15px;
+  font-weight: 600;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    transform 0.12s ease;
+}
+
+.calendar-date:hover {
+  background-color: #edf0f2;
+}
+
+.calendar-date:active {
+  transform: scale(0.94);
+}
+
+/* JS(renderCalendar)が選択中の日付に付ける */
+.calendar-date.is-selected {
+  background-color: #202124;
+  color: #ffffff;
+}
+
+/* 「〇日選択中」 */
+.calendar-summary {
+  margin-top: 15px;
+  text-align: center;
+  color: #747c84;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ========================================
+   カレンダー下部ボタン
+======================================== */
+
+/* 「選択解除」「キャンセル」「決定」を横並び */
+.calendar-footer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* secondary(選択解除・キャンセル)とconfirm(決定)の共通見た目 */
+.secondary-button,
+.confirm-button {
+  min-height: 48px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+/* 選択解除・キャンセルは控えめな見た目 */
+.secondary-button {
+  border: 1px solid #cfd5db;
+  background-color: #ffffff;
+  color: #25292d;
+}
+
+.secondary-button:hover {
+  background-color: #f1f4f6;
+}
+
+/* 決定は主要アクションなので送信ボタンと同じ濃い色 */
+.confirm-button {
+  border: none;
+  background-color: #202124;
+  color: #ffffff;
+}
+
+.confirm-button:hover {
+  opacity: 0.9;
+}
+
+/* ========================================
+   タブレット（画面幅900px以下）
+======================================== */
+
+@media (max-width: 900px) {
+  .page-container {
+    padding: 28px 18px;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: none; /* PC向けの680px制限を解除 */
+    padding: 30px 26px;
+  }
+
+  .page-heading h1 {
+    font-size: 30px;
+  }
+
+  .page-heading p {
+    font-size: 16px;
+  }
+
+  /* 指で操作するのでタップしやすいよう少し大きく */
+  input,
+  select {
+    min-height: 56px;
+    font-size: 17px;
+  }
+
+  .calendar-open-button {
+    min-height: 56px;
+    font-size: 17px;
+  }
+
+  .selected-dates-display {
+    min-height: 56px;
+    font-size: 16px;
+  }
+
+  .form-group > label {
+    font-size: 17px;
+  }
+
+  .form-section {
+    padding: 22px 20px;
+  }
+
+  .section-heading h2 {
+    font-size: 20px;
+  }
+
+  .section-heading p {
+    font-size: 15px;
+  }
+
+  .time-field label {
+    font-size: 15px;
+  }
+
+  .lesson-number {
+    font-size: 17px;
+  }
+
+  .add-lesson-button {
+    min-height: 56px;
+    font-size: 16px;
+  }
+
+  .submit-button {
+    min-height: 60px;
+    font-size: 18px;
+  }
+}
+
+/* ========================================
+   スマホ（画面幅600px以下）
+======================================== */
+
+@media (max-width: 600px) {
+  /* 画面狭いので余白・装飾削って画面いっぱいに使う */
+  body {
+    background-color: #ffffff;
+  }
+
+  .page-container {
+    width: 100%;
+    min-height: 100svh;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: none;
+    gap: 24px;
+    padding: 12px 2px;
+    border: none;
+    border-radius: 0; /* 角丸やめて画面いっぱいのシートっぽく */
+    box-shadow: none;
+  }
+
+  .page-heading {
+    padding: 0 8px;
+  }
+
+  .form-group {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .form-section {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 20px 14px;
+  }
+
+  .submit-button {
+    width: calc(100% - 16px);
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  .message {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+/* ========================================
+   小さいスマホ（画面幅390px以下）
+======================================== */
+
+@media (max-width: 390px) {
+  .page-container {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .form-card {
+    gap: 24px;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .page-heading h1 {
+    font-size: 26px;
+  }
+
+  .form-section {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+
+  /* さらに狭いと横並びの余裕が無いので縦積みに */
+  .time-row,
+  .lesson-time-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* 縦積みになったので〜は要らない */
+  .time-separator {
+    display: none;
+  }
+
+  .calendar-modal {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .weekday-row,
+  .calendar-grid {
+    gap: 3px;
+  }
+
+  .calendar-date {
+    min-height: 41px;
+    font-size: 15px;
+  }
 }
