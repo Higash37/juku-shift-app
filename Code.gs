@@ -103,7 +103,11 @@ function getTimeOptions() {
   const timeValues = settings.getRange(2, 1, settingLastRow - 1, 1).getValues();
   const times = timeValues
     .map(function (row) {
-      return String(row[0] || "").trim();
+      const value = row[0];
+      if (value instanceof Date) {
+        return Utilities.formatDate(value, Session.getScriptTimeZone(), "HH:mm");
+      }
+      return String(value || "").trim();
     })
     .filter(function (time) {
       return time !== "";
