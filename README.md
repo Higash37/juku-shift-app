@@ -2,26 +2,13 @@
 
 塾の講師が **シフト** を提出するためのWebアプリです。
 
-## 機能
+## 使われる環境
 
-- [x] 校舎名選択
-- [x] 講師プルダウン
-- [x] 複数日カレンダーモーダル
-- [x] 授業時間追加
+- 講師や教室長のスマホやタブレット
+- 講師や教室長のpc
+- 教室のpc
 
-## 技術構成
+## 参考にしたサイト
 
-- `Google Apps Script`
-- `HTML / CSS / JavaScript`
-- `Google Spreadsheet`
-
-### 参考リンク
-[Google Apps Script](https://developers.google.com/apps-script)
-
-## ファイル構成
-
-```
-Code.gs    - GAS側の処理
-Style.html - CSSスタイル
-index.html - 画面のHTML
-```
+- <head>タグの理解：https://developer.mozilla.org/ja/docs/Glossary/Head
+- `google.script.run`クラスの理解: https://developers.google.com/apps-script/guides/html/reference/run?hl=ja
