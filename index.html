@@ -1,33 +1,30 @@
 <!doctype html>
+<!-- 日本語：日本の塾での用途のため -->
 <html lang="ja">
   <head>
+    <title>【塾向け】シフトサービス -スプレッドシートにサイトから簡単反映-</title>
     <base target="_top" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- スタイルシートを読み込む -->
     <?!= HtmlService.createHtmlOutputFromFile("Style").getContent(); ?>
   </head>
 
   <body>
-    <!-- メイン部分 -->
     <main class="page-container">
-      <!-- カード部分 -->
       <section class="form-card">
-        <!-- タイトル部分 -->
         <div class="page-heading">
           <h1>シフト提出</h1>
           <p>勤務日と授業時間を入力してください</p>
         </div>
 
-        <!-- 校舎名 -->
         <div class="form-group">
           <label for="schoolName"> 校舎名 </label>
-          <!-- filterMembersBySchool()で全メンバーから校舎に適するメンバーをフィルター -->
           <select id="schoolName" onchange="filterMembersBySchool()">
             <option value="">読み込み中...</option>
           </select>
         </div>
 
-        <!-- 名前 -->
         <div class="form-group">
           <label for="userName"> 名前 </label>
           <select id="userName" disabled>
@@ -35,7 +32,6 @@
           </select>
         </div>
 
-        <!-- 勤務日 -->
         <div class="form-group">
           <label> 勤務日 </label>
           <button type="button" class="calendar-open-button" onclick="openCalendarModal()">
@@ -46,11 +42,10 @@
           </div>
         </div>
 
-        <!-- スタッフ勤務時間 -->
         <div class="form-section">
           <div class="section-heading">
             <div>
-              <h2>スタッフ勤務時間</h2>
+              <h2>スタッフ勤務希望時間</h2>
               <p>選択したすべての日に適用されます</p>
             </div>
           </div>
@@ -74,11 +69,11 @@
           </div>
         </div>
 
-        <!-- 授業時間 -->
         <div class="form-section">
           <div class="section-heading">
             <div>
-              <h2>授業時間</h2>
+              <h2>スタッフシフト内授業時間</h2>
+              <p>3件連続なら13:00~16:00など</p>
               <p>最大7件まで追加できます</p>
             </div>
             <span id="lessonCount"> 1 / 7件 </span>
@@ -96,18 +91,14 @@
           </button>
         </div>
 
-        <!-- 送信ボタン -->
         <button id="submitButton" type="button" class="submit-button" onclick="sendShifts()">
           シフトを送信
         </button>
-        <!-- aria-live：文字変わったら読み上げてくれるやつ -->
         <p id="message" class="message" aria-live="polite"></p>
       </section>
     </main>
 
-    <!-- カレンダーモーダル：普段はdisplay:noneで隠れてる -->
     <div id="calendarModal" class="modal-overlay" onclick="handleModalBackgroundClick(event)">
-      <!-- role/aria系はスクリーンリーダー向けの印 -->
       <div class="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendarTitle">
         <div class="modal-handle"></div>
 
@@ -115,14 +106,12 @@
           <button type="button" class="month-button" aria-label="前の月" onclick="changeMonth(-1)">
             ＜
           </button>
-          <!-- 中身空、renderCalendarが「2026年 8月」って入れてくる -->
           <h2 id="calendarTitle"></h2>
           <button type="button" class="month-button" aria-label="次の月" onclick="changeMonth(1)">
             ＞
           </button>
         </div>
 
-        <!-- 曜日の行、ここは固定でJSは触らない -->
         <div class="weekday-row">
           <div>日</div>
           <div>月</div>
@@ -133,7 +122,6 @@
           <div>土</div>
         </div>
 
-        <!-- 中身空、renderCalendarが日付ボタン詰めてくる -->
         <div id="calendarGrid" class="calendar-grid"></div>
 
         <div class="calendar-summary">
@@ -141,15 +129,12 @@
         </div>
 
         <div class="calendar-footer">
-          <!-- 仮選択(temporarySelectedDates)だけリセット、本番には影響なし -->
           <button type="button" class="secondary-button" onclick="clearTemporaryDates()">
             選択解除
           </button>
-          <!-- 仮選択捨てて閉じるだけ -->
           <button type="button" class="secondary-button" onclick="closeCalendarModal()">
             キャンセル
           </button>
-          <!-- ここで初めて仮選択を本番(selectedDates)に反映 -->
           <button type="button" class="confirm-button" onclick="confirmSelectedDates()">
             決定
           </button>
@@ -157,101 +142,87 @@
       </div>
     </div>
 
+    <!-- 講師がシフトを入力して、送信できるようにする -->
     <script>
-      // 授業数のMAX制限
-      const MAX_LESSONS = 7;
-      // 全てのメンバーを取得
-      let allMembers = [];
-      // Settingsシートから取ってきた時間の選択肢一覧
-      let allTimes = [];
-      // カレンダーで選択された日付を取得
-      let selectedDates = [];
-      // カレンダーモーダルが開いている間の日付を取得
-      // 決定が押されると日付がselectedDatesへ
-      let temporarySelectedDates = [];
-      // 最新日を取得
-      let currentCalendarDate = new Date();
-      // 画面が読み込まれたらメンバー・時間選択肢・授業時間行をロード
-      window.addEventListener("DOMContentLoaded", function () {
-        loadMembers();
-        loadTimeOptions();
-        updateLessonRows();
-      });
+      const MAX_LESSONS = 7; // 授業時間カードの追加上限。マジックナンバーを避けるためにこちらに記載。
+      let allMembers = []; // 全スタッフデータ。校舎切替の度に通信しなくていいよう、最初に1回だけ取得して保存
+      let allTimes = []; // 時間の選択肢一覧。スプシに時間選択肢列があるのでそこから取得。allMembersと同じ理由でここに保存。
+      let selectedDates = []; // 送信予定の勤務日。「決定」ボタンを押した時だけ追加。
+      let temporarySelectedDates = []; // カレンダーモーダル内で編集中の下書き。「キャンセル」が押下されたなら本番影響はしない。
+      let currentCalendarDate = new Date(); // カレンダーが今表示している年月。初期値は今日。前月/次月ボタンをまたぎ覚えたいので関数前に配置。
+      loadMembers(); // メンバーを取得
+      loadTimeOptions();
+      updateLessonRows();
 
-      /**
-       * 校舎一覧と名前一覧を取得する
-       * 呼ばれるとこ: DOMContentLoaded（画面開いた直後）
-       * 影響先: schoolNameプルダウン、userNameプルダウン
-       */
+      // 総メンバーを取得
       function loadMembers() {
-        // プルダウンのタグを取ってくる
-        const schoolSelect = document.getElementById("schoolName");
-        // プルダウンのタグ（こっちはユーザー名）を取ってくる
-        const userSelect = document.getElementById("userName");
+        const schoolSelect = document.getElementById("schoolName"); // 学校名を保存
+        const userSelect = document.getElementById("userName"); // スタッフ名を保存
 
-        // GASと非同期通信している。
-        // google.script.runはGASが用意しているオブジェクト
+        // GASとの非同期通信用のクラス。クライアントサイトAPI。
         google.script.run
-          // GASのgoogle.script.runのメソッド
-          // 繋がったら()の処理をしてくれる
-          // result はgetMembers()の戻り値がくる
-          // schools:[]とmembers:[]のオブジェクトがくる
+          // .withSuccessHandler(f)メソッド: サーバー側関数が正常に返された場合実行する。
           .withSuccessHandler(function (result) {
-            // result で出てきたmembersをallMembersへ保存
-            // nullなど偽っぽい値であれば空配列を使う
+            // サーバーから取得されたスタッフを保存
             allMembers = result.members || [];
-            // schoolSelectのHTMLを変更
+            // プルダウンの中身をリセット。1個だけの選択肢にし、読み込み中というデフォルト表示を消す。
             schoolSelect.innerHTML = '<option value="">' + "校舎名を選択してください" + "</option>";
-            // resultで取得した学校名をoptionタグに入れて繰り返す
+            // サーバーから送られてきた校舎名を1個の校舎名につき1つのoptionタグを作る
+            // ここは populateTimeSelect のように別関数へ切り出していない。
+            // 校舎名のプルダウンはここ1箇所にしか出てこないため、
+            // 関数化しても再利用先が無く、あえて分けるメリットが薄いと判断したため。
             result.schools.forEach(function (schoolName) {
+              // optionタグを作り、optionと命名
               const option = document.createElement("option");
+              // optionのvalueに校舎名、表示にも校舎名を保存
               option.value = schoolName;
               option.textContent = schoolName;
+              // 上ではoptionタグを作っただけなのでそれをschoolSelectを通してselectタグに保存
               schoolSelect.appendChild(option);
             });
-            // 校舎名のプルダウンボックスのHTMLを変更
+            // loadMembers()自体が再度呼ばれた場合に備えて、userSelectも未選択状態に戻す
+            // (普段の校舎切り替えはfilterMembersBySchoolが別で担当しており、ここは関係しない)
             userSelect.innerHTML =
               '<option value="">' + "先に校舎名を選択してください" + "</option>";
             userSelect.disabled = true;
           })
-          // 繋がらなかったら()の処理をしてくれる
+          // .withFailureHandler(f)メソッド: サーバー側関数が例外をスローした場合に実行するコールバック関数
+          // エラーが起きれば、校舎名・ユーザー名プルダウンに取得できなかった旨のoptionを追加
+          // また、通常通りユーザー名は選べないように
           .withFailureHandler(function (error) {
             schoolSelect.innerHTML = '<option value="">' + "取得できませんでした" + "</option>";
             userSelect.innerHTML = '<option value="">' + "取得できませんでした" + "</option>";
             userSelect.disabled = true;
-            showMessage(error.message || "校舎名と名前を取得できませんでした。", true);
           })
-          // ここで実際に.gs側の関数を呼ぶ
+          // gs側のgetMembers()を呼ぶ。成功なら.withSuccessHandler(f)を、失敗なら.withFailureHandler(f)を呼ぶ。
           .getMembers();
       }
 
-      /**
-       * Settingsシートから時間の選択肢一覧を取得する
-       * 呼ばれるとこ: DOMContentLoaded（画面開いた直後）
-       * 影響先: staffStart、staffEndプルダウン（lesson-start/endは追加時にpopulateTimeSelectで反映）
-       */
+      // gs側のgetTimeOptions()を読んで、staffStartとstaffEndタグを作る
+      // loadTimeOptions()ではgs呼び出しとoptionタグ生成を分ける。
       function loadTimeOptions() {
         google.script.run
+          // サーバー接続成功時
           .withSuccessHandler(function (result) {
-            // 後でaddLessonRowからも使えるよう、グローバル変数に保存しておく
             allTimes = result.times || [];
+            // オプションタグを時間ごとに作る
             populateTimeSelect(document.getElementById("staffStart"));
             populateTimeSelect(document.getElementById("staffEnd"));
           })
-          .withFailureHandler(function (error) {
-            showMessage(error.message || "時間の選択肢を取得できませんでした。", true);
-          })
+          // サーバー接続失敗時
+          // エラーで空を吐く
+          .withFailureHandler(function (error) {})
+          // gs側のスプシから時間一覧を取得する関数を呼ぶ
           .getTimeOptions();
       }
 
-      /**
-       * 時間プルダウン1個分に、allTimesの中身をoptionとして詰める
-       * 呼ばれるとこ: loadTimeOptions、addLessonRow
-       * 影響先: 渡されたselect要素の中身
-       */
+      // HTMLタグを受け取り、中にoptionタグを入れる関数
       function populateTimeSelect(select) {
+        // デフォルトの内容へリセット
         select.innerHTML = '<option value="">' + "選択してください" + "</option>";
 
+        // 時間ごとにoptionタグを作り、valueと表示に時間を入れる
+        // select.appendChild(option)で実際のselectタグに保存
         allTimes.forEach(function (time) {
           const option = document.createElement("option");
           option.value = time;
@@ -260,35 +231,31 @@
         });
       }
 
-      /**
-       * 選択された校舎の名前だけ表示する
-       * 呼ばれるとこ: schoolNameプルダウンのonchange
-       * 影響先: userNameプルダウン
-       */
+      // 校舎名に基づきスタッフを絞り込む
       function filterMembersBySchool() {
-        // 入力された学校名を取得
+        // 校舎名に入力された校舎名をschoolNameに保存
         const schoolName = document.getElementById("schoolName").value;
-        // 選択されたユーザー名を取得
+        // userNameタグの中身をuserSelectで扱いやすくする
         const userSelect = document.getElementById("userName");
-        // 前の情報が残ってる時用で削除
+        // userSelectの中身を空文字で初期化する
         userSelect.innerHTML = "";
-        // 学校名が入っていなければずっと起動
-        // 校舎名が入ってない場合でユーザー名を選択させない設計
+        // 校舎名がなければuserSelectは触れないようにする
         if (!schoolName) {
-          // .innerHTMLはその要素の中身をHTML文字列として読み書きできるプロパティ
           userSelect.innerHTML = '<option value="">' + "先に校舎名を選択してください" + "</option>";
           userSelect.disabled = true;
           return;
         }
-        // ここでallMembersからschoolNameが同じメンバーだけフィルター
+        // 校舎名がある場合、allMembersの中から、
+        // 選択された校舎名と適している校舎名を持つスタッフをフィルタリング
         const filteredMembers = allMembers.filter(function (member) {
           return member.school_name === schoolName;
         });
 
-        // schoolNameがあればifを超えてこっちへ
+        // スタッフ選択ボックスも初期化
         userSelect.innerHTML = '<option value="">' + "名前を選択してください" + "</option>";
 
-        // optionタグをfilteredMembersで集まったメンバー分作ってoptionタグに変換
+        // 校舎が一致するメンバーごとにoptionを作る
+        // userSelect.appendChild(option)で実際のslectボックスに保存
         filteredMembers.forEach(function (member) {
           const option = document.createElement("option");
           option.value = member.name;
@@ -296,30 +263,26 @@
           userSelect.appendChild(option);
         });
 
-        // user選択ボックスを表示モードに
+        // スタッフ選択ボックスを選択できる状態にする
         userSelect.disabled = false;
       }
 
-      /**
-       * 授業時間を追加する
-       * 呼ばれるとこ: 「＋ 授業時間を追加」ボタンのonclick
-       * 影響先: lessonList（授業カードが1枚増える）、lessonCount、新しいカードのlesson-start/end
-       */
+      // 授業時間カードをMAX_LESSONSの数値まで作成できるようにする
       function addLessonRow() {
         const lessonList = document.getElementById("lessonList");
-        // 今何個あるか数える
+        // 今何個の授業時間カードが画面にあるか数える
+        // lessonListの中にある.lesson-rowを探しlessonRowsに一覧を入れる
         const lessonRows = lessonList.querySelectorAll(".lesson-row");
 
-        // 上限超えてたらメッセージ出して終わり
+        //授業時間カードの数が上限値に達したらリターンを返す
         if (lessonRows.length >= MAX_LESSONS) {
-          showMessage("授業時間は最大7件までです。", true);
           return;
         }
 
-        // カード1枚分をJS上で作る（この時点ではまだ画面に無い）
+        // 追加の授業時間カード作成部分
+        // divタグを作り、その中にclass名と要素を入れる
         const lessonRow = document.createElement("div");
         lessonRow.className = "lesson-row";
-        // 中身まとめて突っ込む
         lessonRow.innerHTML = `
         <div class="lesson-row-header">
           <span class="lesson-number">
@@ -358,55 +321,44 @@
         </div>
       `;
 
-        // 作ったカードを実際に画面へ貼る
         lessonList.appendChild(lessonRow);
-        // 作ったばかりの2つのselectに、読み込み済みのallTimesを反映する
+        // 開始時間と終了時間のリストを追加する
         populateTimeSelect(lessonRow.querySelector(".lesson-start"));
         populateTimeSelect(lessonRow.querySelector(".lesson-end"));
-        // 件数・番号・上限のチェックし直し
         updateLessonRows();
       }
 
-      /**
-       * 授業時間を削除する
-       * 呼ばれるとこ: 各カードの「削除」ボタンのonclick（押した自分自身がbuttonで渡ってくる）
-       * 影響先: lessonList（押したカードだけ消える）、lessonCount
-       */
       function removeLessonRow(button) {
-        // 自分の行だけ削除
         button.closest(".lesson-row").remove();
         updateLessonRows();
       }
 
-      /**
-       * 授業番号と件数を更新する
-       * 呼ばれるとこ: DOMContentLoaded、addLessonRow、removeLessonRow、resetFormの最後
-       * 影響先: 各カードのlesson-number、lessonCount、addLessonButtonのdisabled
-       */
+      // 授業時間カードの増加分を表示
       function updateLessonRows() {
+        // 現在の授業時間カードの数を確認
         const lessonRows = document.querySelectorAll(".lesson-row");
 
-        // 「授業◯」の番号を振り直す
+        // 授業時間カードの数だけ授業1、授業2と数を増やす
         lessonRows.forEach(function (row, index) {
           row.querySelector(".lesson-number").textContent = "授業 " + (index + 1);
         });
 
-        // 「◯ / 7件」表示を更新
+        // 総授業数を〇/MAX件として表示
         document.getElementById("lessonCount").textContent =
           lessonRows.length + " / " + MAX_LESSONS + "件";
-        // 7件に達してたら追加ボタンをdisabledに
+        // 授業時間カード追加ボタンを授業追加の上限まできたら触れないようにする
         document.getElementById("addLessonButton").disabled = lessonRows.length >= MAX_LESSONS;
       }
 
-      /**
-       * 授業時間を配列で取得する
-       * 呼ばれるとこ: sendShiftsの中
-       * 影響先: 画面は変えない。戻り値をsendShiftsが使うだけ
-       */
+      // 入力された授業時間を{start: ..., end: ...}とsendShifts()がサーバーに送れるデータとしてまとめる
+      // 返ってくる想定配列 [{ start: "16:00", end: "18:00" },{ start: "19:00", end: "22:00" },]
+
       function getLessons() {
+        // 追加されている授業時間を取得
         const lessonRows = document.querySelectorAll(".lesson-row");
 
-        // 各カードから値だけ取り出して配列にする。新しい配列がほしいのでmap
+        // querySelectorAll()はNodeListを返す。配列を返さないので Array.from(対象)で配列に変換しmapを使ってる
+        // map(f(){処理})にて想定配列の中身オブジェクト1つずつを作る
         return Array.from(lessonRows).map(function (row) {
           return {
             start: row.querySelector(".lesson-start").value,
@@ -415,51 +367,39 @@
         });
       }
 
-      /**
-       * カレンダーを開く
-       * 呼ばれるとこ: 「カレンダーから選択」ボタンのonclick
-       * 影響先: calendarModalが表示される、中のカレンダー(renderCalendar経由)
-       */
+      // カレンダーモーダルの動作部分
+      //
       function openCalendarModal() {
-        // 本番の選択を仮リストにコピーしとく
+        // = selectedDatesと書くと、selectedDatesも変わってしまうためスプレッド構文を利用
         temporarySelectedDates = [...selectedDates];
+        // calendarModalに開いているという状態のクラスを追加
         document.getElementById("calendarModal").classList.add("is-open");
-        // 背景スクロール止める
+        // modal-openというクラスをbodyに追加
+        // Style.htmlにてモーダルを開いている際背景ページをスクロールできないように設計しているため追加。
         document.body.classList.add("modal-open");
+        // カレンダーモーダルの中身（今月のカレンダーの日付など）を描画
         renderCalendar();
       }
 
-      /**
-       * カレンダーを閉じる
-       * 呼ばれるとこ: キャンセルボタン、confirmSelectedDates、handleModalBackgroundClick
-       * 影響先: calendarModalが非表示になる
-       */
+      // カレンダーモーダルを閉じる際の設計
+      // openの際と逆の手順
       function closeCalendarModal() {
         document.getElementById("calendarModal").classList.remove("is-open");
         document.body.classList.remove("modal-open");
       }
 
-      /**
-       * モーダル外側を押したら閉じる
-       * 呼ばれるとこ: calendarModal自身のonclick（背景クリック時）
-       * 影響先: 条件に合えばcloseCalendarModalを呼ぶだけ
-       */
+      // 閉じるボタンだけでなくモーダルの背景がおされても閉じられるように修正
+      // event.target.id（実際にクリックされた要素そのもの）でcalendarModalが押されたら閉じる
+      // モーダルを開いたタイミングでcalendarModalがサイト全体に広がる。
+      // 中身以外の外側（calendarModal）が押された時だけ閉じる
       function handleModalBackgroundClick(event) {
-        // 押したのが背景自身(id=calendarModal)のときだけ閉じる
-        // 中のカード押したときはtargetがcalendar-modalになるから閉じない
         if (event.target.id === "calendarModal") {
           closeCalendarModal();
         }
       }
 
-      /**
-       * 前月・次月へ移動
-       * 呼ばれるとこ: ＜／＞ボタンのonclick
-       * 影響先: currentCalendarDateを更新して、renderCalendar経由でカレンダー中身が変わる
-       */
+      // ピッカーで前月が押されたら前月に。次月なら次月に飛ぶ関数
       function changeMonth(amount) {
-        // 今の年月にamount(-1か1)足して作り直す
-        // 月が0未満や11超えても、Dateが勝手に年を繰り上げ/繰り下げしてくれる
         currentCalendarDate = new Date(
           currentCalendarDate.getFullYear(),
           currentCalendarDate.getMonth() + amount,
@@ -468,46 +408,44 @@
         renderCalendar();
       }
 
-      /**
-       * カレンダーを描画する
-       * 呼ばれるとこ: openCalendarModal、changeMonth、toggleDate、clearTemporaryDates
-       * 影響先: calendarTitle、calendarGrid、temporaryDateCount
-       */
+      // currentCalendarDateが指している月のカレンダーを丸ごと書き直す関数
       function renderCalendar() {
-        const year = currentCalendarDate.getFullYear();
-        const month = currentCalendarDate.getMonth(); // 0始まり（1月=0）なので注意
-        // 1日が何曜日か（日曜=0〜土曜=6）
-        const firstWeekday = new Date(year, month, 1).getDay();
-        // 翌月の0日目＝今月の最終日、ってテクニック
-        const lastDate = new Date(year, month + 1, 0).getDate();
-        const title = document.getElementById("calendarTitle");
-        const grid = document.getElementById("calendarGrid");
+        const year = currentCalendarDate.getFullYear(); // 今表示してるページの年
+        const month = currentCalendarDate.getMonth(); // 今表示してるページの月
+        const firstWeekday = new Date(year, month, 1).getDay(); // 表示されている月の初日が何曜か
+        const lastDate = new Date(year, month + 1, 0).getDate(); // 当月の最終日が何日か
+        const title = document.getElementById("calendarTitle"); // カレンダーのタイトル
+        const grid = document.getElementById("calendarGrid"); // カレンダーの日付を並べる場所
 
-        title.textContent = year + "年 " + (month + 1) + "月";
-        // 月切り替えのたびに呼ばれるので、前回の中身を消す
+        title.textContent = year + "年 " + (month + 1) + "月"; // タイトルに現在表示中の年月を入れる
+        // カレンダーの日付並べる場所を初期化
         grid.innerHTML = "";
 
-        // 1日が始まる曜日まで空白マス埋める
+        // gridの中で初日の曜日までを空のdivタグで埋める
         for (let i = 0; i < firstWeekday; i++) {
           const empty = document.createElement("div");
           empty.className = "calendar-empty";
           grid.appendChild(empty);
         }
 
-        // 1日〜最終日まで、日付ボタン作る
+        //　月の最終日までボタンタイプの日付を作成
         for (let day = 1; day <= lastDate; day++) {
+          // formatDate(year, month, day)で "2026-08-05"のような文字列に組み替える
+          // 月日を必ず2桁に揃える。揃えないと文字列として並び替えたときに "10" が "9" より前に来てしまう
           const dateString = formatDate(year, month, day);
+          // 日付ごとにボタンタグを作る
           const button = document.createElement("button");
           button.type = "button";
           button.className = "calendar-date";
+          // 日付を表示
           button.textContent = day;
 
-          // 仮選択に入ってたら選択中の見た目にする
+          // 選択された日付に選択中というクラスを付与する
           if (temporarySelectedDates.includes(dateString)) {
             button.classList.add("is-selected");
           }
 
-          // 押されたらtoggleDateへ渡す
+          // 日付がクリックされたことを感知しtoggleDate()を起動
           button.addEventListener("click", function () {
             toggleDate(dateString);
           });
@@ -515,74 +453,54 @@
           grid.appendChild(button);
         }
 
-        // 「◯日選択中」も一緒に更新
         updateTemporaryDateCount();
       }
 
-      /**
-       * 日付を選択・解除する
-       * 呼ばれるとこ: 各日付ボタンのクリック（renderCalendar内でaddEventListener）
-       * 影響先: temporarySelectedDates配列、カレンダーの見た目（renderCalendar経由）
-       */
+      // 日付の選択 & 選択解除切替（トグル）管理部分
       function toggleDate(dateString) {
+        // 日付が下書き選択の中にあるかを調べる
+        // ある場合 = そのインデックスを返す
+        // ない場合 = -1を返す
         const index = temporarySelectedDates.indexOf(dateString);
 
+        // 日付が追加されてなければ追加
         if (index === -1) {
-          // まだ無ければ追加
           temporarySelectedDates.push(dateString);
+          // 追加されていれば削除
         } else {
-          // あれば1個消す＝解除
           temporarySelectedDates.splice(index, 1);
         }
 
-        // 見た目に反映させるため描き直す
+        // カレンダーを再描画
         renderCalendar();
       }
 
-      /**
-       * モーダル内の日付選択を解除
-       * 呼ばれるとこ: 「選択解除」ボタンのonclick
-       * 影響先: temporarySelectedDates、カレンダーの見た目（本番のselectedDatesはそのまま）
-       */
+      // 日付選択情報を全削除部分
       function clearTemporaryDates() {
-        // 仮選択だけ空にする。本番のselectedDatesはまだ触らない
         temporarySelectedDates = [];
         renderCalendar();
       }
 
-      /**
-       * 選択日数を表示
-       * 呼ばれるとこ: renderCalendarの最後
-       * 影響先: temporaryDateCountの文字
-       */
+      // 日付何日選択中か反映部分
       function updateTemporaryDateCount() {
         document.getElementById("temporaryDateCount").textContent =
           temporarySelectedDates.length + "日選択中";
       }
 
-      /**
-       * 日付選択を確定する
-       * 呼ばれるとこ: 「決定」ボタンのonclick
-       * 影響先: 本番のselectedDates、メイン画面のselectedDatesDisplay、モーダルが閉じる
-       */
+      // カレンダーモーダルを確定し閉じる部分
       function confirmSelectedDates() {
-        // ここでやっと本番のselectedDatesに反映
+        // 一時日付選択情報を確定情報へ反映
         selectedDates = [...temporarySelectedDates];
-        // 文字列のままsortしてもYYYY-MM-DD形式だから日付順になる
+        // 日付順に並べ替え（dataStringの形にしてないとずれる）
         selectedDates.sort();
         updateSelectedDatesDisplay();
         closeCalendarModal();
       }
 
-      /**
-       * 選択した日付を画面に表示する
-       * 呼ばれるとこ: confirmSelectedDates、resetForm
-       * 影響先: メイン画面のselectedDatesDisplay
-       */
+      // 何日選択しているかをカレンダー下に表示
       function updateSelectedDatesDisplay() {
         const display = document.getElementById("selectedDatesDisplay");
 
-        // 1件も無ければ案内文出して終わり
         if (selectedDates.length === 0) {
           display.textContent = "日付が選択されていません";
           display.classList.remove("has-dates");
@@ -590,10 +508,8 @@
         }
 
         display.innerHTML = "";
-        // 文字の色を選択済み用に変えるクラス付ける
         display.classList.add("has-dates");
 
-        // 選んだ日付の数だけチップ作って並べる
         selectedDates.forEach(function (date) {
           const chip = document.createElement("span");
           chip.className = "date-chip";
@@ -602,53 +518,46 @@
         });
       }
 
-      /**
-       * YYYY-MM-DD形式を作る
-       * 呼ばれるとこ: renderCalendarの中（日付ボタン1個作るたび）
-       * 影響先: 画面は変えないヘルパー関数、文字列を返すだけ
-       */
+      // String
       function formatDate(year, month, day) {
-        // 月は0始まりだから+1して、1桁なら頭に0付けて2桁にする
+        // 人が読む月番号（8月=8）にするためにmonth + 1している。
+        // また、padStart()にて必ず2ケタかつ、7であれば07にしている
         const formattedMonth = String(month + 1).padStart(2, "0");
+        // 日番号も同様
         const formattedDay = String(day).padStart(2, "0");
+        // 2026-02-05のような形にする
         return year + "-" + formattedMonth + "-" + formattedDay;
       }
 
-      /**
-       * 日付を表示用にする
-       * 呼ばれるとこ: updateSelectedDatesDisplayの中（チップ1個作るたび）
-       * 影響先: 画面は変えないヘルパー関数、文字列を返すだけ
-       */
+      // 日付を02/05のような形式にする
       function formatDisplayDate(dateString) {
-        // "2026-08-15"を"-"で割って[2026, 08, 15]にする
         const parts = dateString.split("-");
-        // Numberにすると先頭の0が消えて"8/15"になる
         return Number(parts[1]) + "/" + Number(parts[2]);
       }
 
-      /**
-       * シフトを送信する
-       * 呼ばれるとこ: 「シフトを送信」ボタンのonclick
-       * 影響先: submitButtonの状態・文字、messageエリア、成功時はresetForm経由でフォーム全部
-       */
+      // 送信ボタンが押された際の準備部分
       function sendShifts() {
-        // 画面の入力値を全部集める
+        // 校舎名
         const schoolName = document.getElementById("schoolName").value;
+        // スタッフ名
         const userName = document.getElementById("userName").value;
+        // スタッフ開始時間
         const staffStart = document.getElementById("staffStart").value;
+        // スタッフ終了時間
         const staffEnd = document.getElementById("staffEnd").value;
+        // 授業
         const lessons = getLessons();
+        // 提出ボタン
         const submitButton = document.getElementById("submitButton");
-        // 送信前にチェック。問題あればメッセージが返ってくる
+        // 送信用にまとめる
         const validationMessage = validateForm(schoolName, userName, staffStart, staffEnd, lessons);
 
-        // 空文字じゃなければ何か問題ありなので、送信せず終了
+        // 送信の型になっていれば返す
         if (validationMessage) {
-          showMessage(validationMessage, true);
           return;
         }
 
-        // サーバーに送る形に組み立てる
+        // 送信の型
         const request = {
           school_name: schoolName,
           user_name: userName,
@@ -658,40 +567,27 @@
           lessons: lessons,
         };
 
-        // 通信中に連打されないようボタンを止める
+        // 送信ボタンは送信中は押せないようにする
         submitButton.disabled = true;
         submitButton.textContent = "送信中...";
-        showMessage("", false);
 
-        // Code.gs側のsaveShiftsを呼ぶ
         google.script.run
+          // 成功すれば上部を初期化しシフトを送信と表示
           .withSuccessHandler(function (result) {
-            showMessage(
-              result.shift_count +
-                "日分のシフトと、" +
-                result.lesson_count +
-                "件の授業時間を登録しました。",
-              false,
-            );
-            // 成功したらフォームを空に戻す
             resetForm();
             submitButton.disabled = false;
             submitButton.textContent = "シフトを送信";
           })
+          // 失敗すればそのまま
           .withFailureHandler(function (error) {
-            showMessage(error.message || "登録に失敗しました。", true);
-            // 失敗時は入力残したままボタンだけ戻す（もう一回送れるように）
             submitButton.disabled = false;
             submitButton.textContent = "シフトを送信";
           })
+          // requestをsaveShifts()を通してgsに送る
           .saveShifts(request);
       }
 
-      /**
-       * 入力内容を確認する
-       * 呼ばれるとこ: sendShiftsの中（送信前チェック）
-       * 影響先: 画面は変えない。エラー文字列（or空文字）を返すだけ
-       */
+      // 送信情報が足りなければエラーメッセージを出す
       function validateForm(schoolName, userName, staffStart, staffEnd, lessons) {
         if (!schoolName) {
           return "校舎名を選択してください。";
@@ -709,12 +605,10 @@
           return "スタッフ勤務時間を入力してください。";
         }
 
-        // 文字列同士でも"09:00" < "17:00"みたいに比較できる
         if (staffStart >= staffEnd) {
           return "スタッフ終了時間は開始時間より後にしてください。";
         }
 
-        // 何件目でエラーか伝えたいのでforEachじゃなくてfor文
         for (let i = 0; i < lessons.length; i++) {
           const lesson = lessons[i];
 
@@ -726,51 +620,38 @@
             return "授業" + (i + 1) + "の終了時間は開始時間より後にしてください。";
           }
 
-          // スタッフ時間の範囲内に収まってるかもチェック
           if (lesson.start < staffStart || lesson.end > staffEnd) {
             return "授業" + (i + 1) + "はスタッフ勤務時間内に設定してください。";
           }
         }
 
-        // ここまで来たら問題なし。空文字＝エラーなしの合図
         return "";
       }
 
-      /**
-       * 送信後に入力を初期化する
-       * 呼ばれるとこ: sendShifts成功時
-       * 影響先: schoolName、userName、selectedDatesDisplay、staffStart/End、lessonList全部
-       */
+      // 入力された情報を初期化
       function resetForm() {
         const schoolSelect = document.getElementById("schoolName");
         const userSelect = document.getElementById("userName");
 
+        // 校舎名を初期化
         schoolSelect.value = "";
+        // スタッフ名を初期化
         userSelect.innerHTML = '<option value="">' + "先に校舎名を選択してください" + "</option>";
+        // 校舎名を選ばなければスタッフ名選べない初期状態に
         userSelect.disabled = true;
+        // 選んだ確定送信予定シフトを初期化
         selectedDates = [];
+        // 選んだリストも初期化
         temporarySelectedDates = [];
+        // 画面に表示している選んだ日も初期化
         updateSelectedDatesDisplay();
         document.getElementById("staffStart").value = "";
         document.getElementById("staffEnd").value = "";
 
-        // 授業時間のカードは全部消して0件に戻す
+        // 授業リストを初期化
         const lessonList = document.getElementById("lessonList");
         lessonList.innerHTML = "";
         updateLessonRows();
-      }
-
-      /**
-       * メッセージを表示する
-       * 呼ばれるとこ: loadMembers、addLessonRow、sendShiftsなど、いろんな場所から
-       * 影響先: messageエリアの文字・色
-       */
-      function showMessage(text, isError) {
-        const message = document.getElementById("message");
-        message.textContent = text;
-        // toggleの第2引数がtrueなら付ける、falseなら外す
-        message.classList.toggle("error-message", isError);
-        message.classList.toggle("success-message", !isError && text !== "");
       }
     </script>
   </body>
